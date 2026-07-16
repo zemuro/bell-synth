@@ -62,6 +62,16 @@ All 14 pytest tests passed: 8 retained from Phase 01 and 6 new visualization tes
 - Peak labels may still overlap on spectra with very dense partials; the current mitigation alternates label positions and labels all peaks above a relative-amplitude threshold.
 - Interactive window behavior is tested manually only; automated GUI testing is out of scope.
 
+## Post-implementation Refinements
+
+After the initial Phase 02 implementation, the default analysis parameters were tuned for real bell samples:
+
+- `--prominence` default changed from `0.01` to `0.005` to catch strong nearby partials.
+- `--distance` default changed from `50` to `20` bins (about 59 Hz at 48 kHz with the default 16384-sample FFT) to resolve inharmonic partials close in frequency.
+- Added `--spec-floor` flag with default `-144.0` dB to cap the spectrogram color scale at the theoretical 24-bit dynamic range, replacing the previous `-225` dB artificial floor.
+
+These changes were validated on `c:/Users/zemuro/Antigravity/bell synth/samples/PerkoBell01.wav`, where a previously missed 805.7 Hz partial (60.2% amplitude) is now detected with the new defaults.
+
 ## Conclusion
 
 The Phase 02 implementation meets the specification and all acceptance criteria. The CLI remains backward-compatible with Phase 01, visualization is optional and well-isolated, and the test suite passes in both interactive and headless configurations.
