@@ -138,7 +138,7 @@ Add the following `argparse` entries:
 
 Notes:
 - If both `--visualize` and `--plot-save` are omitted, the tool behaves exactly like Phase 01.
-- If `--plot-save` is used without `--no-show` and a display is available, the window may still appear unless `--no-show` is also given.
+- `--plot-save` implies `--visualize`: when `--plot-save PATH` is provided, plotting is enabled and the interactive viewer is opened by default unless `--no-show` is also given.
 - For headless environments, import `matplotlib` with a non-interactive backend (e.g., `Agg`) before importing `pyplot`. A robust approach is to call `matplotlib.use('Agg')` when `--no-show` is set.
 
 ### Task 3: Compute spectrogram data
@@ -218,7 +218,7 @@ Example:
 ## 4. Acceptance Criteria
 
 - [ ] `python "c:/Users/zemuro/Antigravity/bell synth/analyze_bell.py" "c:/Users/zemuro/Antigravity/bell synth/samples/bell.wav" --visualize` opens an interactive matplotlib window with two clearly readable subplots.
-- [ ] `python "c:/Users/zemuro/Antigravity/bell synth/analyze_bell.py" "c:/Users/zemuro/Antigravity/bell synth/samples/bell.wav" --plot-save out.png --no-show` produces `out.png` without blocking.
+- [ ] `python analyze_bell.py samples/bell.wav --visualize --peak-count 12 --max-freq 6000 --plot-save bell_report.png --no-show` produces `bell_report.png` without blocking. Verify that the PNG is created and is at least 480x360 pixels.
 - [ ] When `--plot-save` is given without a path, the saved PNG filename is derived from the input filename stem.
 - [ ] The spectrum subplot shows vertical markers at every detected peak frequency and labels containing frequency (Hz), note name + octave, cent deviation, and relative amplitude %.
 - [ ] The spectrogram subplot shows frequency content evolving over the decay segment with time on the x-axis and frequency on the y-axis.

@@ -5,6 +5,10 @@ Bell Sample Overtone Analyzer CLI.
 Reads a single WAV bell sample, skips the noisy attack, averages the magnitude
 spectrum over the remaining signal, and emits a ranked list of overtone peaks
 with frequency, relative amplitude, nearest 12-TET note, and cent deviation.
+
+Phase 02 adds optional matplotlib visualization:
+  - STFT spectrogram of the decay segment
+  - averaged magnitude spectrum with detected partials annotated
 """
 
 from __future__ import annotations
@@ -16,7 +20,7 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from scipy.signal import find_peaks, savgol_filter
+from scipy.signal import find_peaks, savgol_filter, stft
 
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -92,10 +96,63 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Hop size between successive frames (default: 2048).",
     )
     parser.add_argument(
+        "--peak-count",
+        type=int,
+        default=None,
+        help="Maximum number of peaks to report and label (default: no limit).",
+    )
+    parser.add_argument(
         "--format",
         choices=["csv", "table"],
         default="csv",
         help="Output format: csv or table (default: csv).",
+    )
+    parser.add_argument(
+        "--visualize",
+        action="store_true",
+        help="Open an interactive matplotlib window with the analysis plots.",
+    )
+    parser.add_argument(
+        "--spectrogram",
+        action="store_true",
+        help="Alias for --visualize.",
+    )
+    parser.add_argument(
+        "--plot-save",
+        nargs="?",
+        const="",
+        default=None,
+        help="Save the figure to a PNG. If used without a path, a default "
+             "filename is derived from the input file.",
+    )
+    parser.add_argument(
+        "--no-show",
+        action="store_true",
+        help="Do not open the interactive plot window; use with --plot-save "
+             "for headless operation.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress the textual CSV/table output.",
+    )
+    parser.add_argument(
+        "--spec-nperseg",
+        type=int,
+        default=4096,
+        help="STFT window length for the spectrogram (default: 4096).",
+    )
+    parser.add_argument(
+        "--spec-noverlap",
+        type=int,
+        default=3072,
+        help="STFT overlap for the spectrogram (default: 3072).",
+    )
+    parser.add_argument(
+        "--spec-nfft",
+        type=int,
+        default=4096,
+        help="FFT length used by the STFT (default: 4096).",
     )
     return parser.parse_args(argv)
 
@@ -134,7 +191,6 @@ def compute_mean_spectrum(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute the mean magnitude spectrum over windowed frames."""
     if fft_size > len(data):
-        # Pad with zeros so at least one full frame can be analyzed.
         data = np.pad(data, (0, fft_size - len(data)))
 
     window = np.hanning(fft_size)
@@ -152,6 +208,28 @@ def compute_mean_spectrum(
     mean_spectrum = np.mean(magnitude_spectra, axis=0)
     freqs = np.fft.rfftfreq(fft_size, 1.0 / sr)
     return mean_spectrum, freqs
+
+
+def compute_stft(
+    data: np.ndarray,
+    sr: int,
+    nperseg: int,
+    noverlap: int,
+    nfft: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the STFT magnitude (dB) of the decay segment."""
+    freqs, times, zxx = stft(
+        data,
+        fs=sr,
+        window="hann",
+        nperseg=nperseg,
+        noverlap=noverlap,
+        nfft=nfft,
+        boundary="zeros",
+    )
+    magnitude = np.abs(zxx)
+    db = 20.0 * np.log10(magnitude + 1e-12)
+    return db, times, freqs
 
 
 def smooth_spectrum(spectrum: np.ndarray, smoothing_window: int) -> np.ndarray:
@@ -213,6 +291,7 @@ def format_peaks(
     peaks: np.ndarray,
     freqs: np.ndarray,
     spectrum: np.ndarray,
+    peak_count: int | None = None,
 ) -> list[dict[str, object]]:
     """Build a list of peak records sorted by descending amplitude."""
     if len(peaks) == 0:
@@ -226,6 +305,8 @@ def format_peaks(
 
     rows: list[dict[str, object]] = []
     for rank, peak_idx in enumerate(sorted_peaks, start=1):
+        if peak_count is not None and rank > peak_count:
+            break
         frequency = float(freqs[peak_idx])
         amplitude_percent = 100.0 * sorted_mags[rank - 1] / max_mag
         note_name, deviation_cents = frequency_to_note(frequency)
@@ -239,6 +320,14 @@ def format_peaks(
             }
         )
     return rows
+
+
+def derive_plot_save_path(input_path: Path, plot_save_arg: str | None) -> Path:
+    """Return the PNG path to use when --plot-save is provided."""
+    if plot_save_arg:
+        return Path(plot_save_arg)
+    stem = input_path.stem
+    return Path(f"{stem}_bell_analysis.png")
 
 
 def write_csv(rows: list[dict[str, object]], output: Path | None) -> None:
@@ -297,14 +386,10 @@ def write_table(rows: list[dict[str, object]], output: Path | None) -> None:
         widths = [max(w, len(cell)) for w, cell in zip(widths, formatted)]
 
     def write_to_fileobj(fobj: object) -> None:
-        header_line = "  ".join(
-            h.ljust(w) for h, w in zip(headers, widths)
-        )
+        header_line = "  ".join(h.ljust(w) for h, w in zip(headers, widths))
         fobj.write(header_line + "\n")
         for formatted in formatted_rows:
-            line = "  ".join(
-                cell.ljust(w) for cell, w in zip(formatted, widths)
-            )
+            line = "  ".join(cell.ljust(w) for cell, w in zip(formatted, widths))
             fobj.write(line + "\n")
 
     if output is None:
@@ -312,6 +397,115 @@ def write_table(rows: list[dict[str, object]], output: Path | None) -> None:
     else:
         with open(output, "w", encoding="utf-8") as f:
             write_to_fileobj(f)
+
+
+def plot_analysis(
+    data: np.ndarray,
+    sr: int,
+    peaks: np.ndarray,
+    spectrum: np.ndarray,
+    freqs: np.ndarray,
+    rows: list[dict[str, object]],
+    args: argparse.Namespace,
+) -> Path | None:
+    """Render and optionally display/save the analysis figure."""
+    # Lazy matplotlib import; set a non-interactive backend when headless.
+    import matplotlib
+
+    if args.no_show:
+        matplotlib.use("Agg")
+
+    import matplotlib.pyplot as plt
+
+    # Compute spectrogram data.
+    spec_db, spec_times, spec_freqs = compute_stft(
+        data,
+        sr,
+        args.spec_nperseg,
+        args.spec_noverlap,
+        args.spec_nfft,
+    )
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+
+    # --- Top subplot: spectrogram ---
+    ax_spec = axes[0]
+    y_max = min(args.max_freq, sr / 2.0)
+    freq_mask = spec_freqs <= y_max
+    im = ax_spec.pcolormesh(
+        spec_times,
+        spec_freqs[freq_mask],
+        spec_db[freq_mask, :],
+        shading="gouraud",
+        cmap="magma",
+    )
+    ax_spec.set_ylim(0, y_max)
+    ax_spec.set_xlabel("Time (s)")
+    ax_spec.set_ylabel("Frequency (Hz)")
+    ax_spec.set_title("STFT Spectrogram (decay segment)")
+    fig.colorbar(im, ax=ax_spec, label="Magnitude (dB)")
+
+    # --- Bottom subplot: averaged spectrum with peaks ---
+    ax_mag = axes[1]
+    spectrum_db = 20.0 * np.log10(np.maximum(spectrum, 0.0) + 1e-12)
+    ax_mag.plot(freqs, spectrum_db, color="steelblue", linewidth=0.8)
+
+    if len(peaks) > 0:
+        peak_freqs = freqs[peaks]
+        peak_mags = spectrum_db[peaks]
+        ax_mag.vlines(
+            peak_freqs,
+            ymin=np.min(spectrum_db) - 5,
+            ymax=peak_mags,
+            color="red",
+            linewidth=1.5,
+            alpha=0.7,
+        )
+
+        # Sort rows by peak_number to annotate in frequency order for clarity.
+        annotation_rows = sorted(rows, key=lambda r: r["frequency_hz"])
+        for idx, row in enumerate(annotation_rows):
+            if row["amplitude_percent"] < 5.0:
+                continue
+            x = row["frequency_hz"]
+            y = float(np.interp(x, freqs, spectrum_db))
+            label = (
+                f"{row['frequency_hz']:.1f} Hz\n"
+                f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
+                f"{row['amplitude_percent']:.1f}%"
+            )
+            # Alternate label vertical alignment to reduce overlap.
+            va = "bottom" if idx % 2 == 0 else "top"
+            offset = 12 if idx % 2 == 0 else -12
+            ax_mag.annotate(
+                label,
+                xy=(x, y),
+                xytext=(0, offset),
+                textcoords="offset points",
+                fontsize=7,
+                ha="center",
+                va=va,
+                bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.8),
+                arrowprops=dict(arrowstyle="-", color="gray", lw=0.5),
+            )
+
+    ax_mag.set_xlim(args.min_freq, min(args.max_freq, sr / 2.0))
+    ax_mag.set_xlabel("Frequency (Hz)")
+    ax_mag.set_ylabel("Magnitude (dB)")
+    ax_mag.set_title("Averaged Spectrum with Detected Partials")
+
+    plt.tight_layout()
+
+    saved_path: Path | None = None
+    if args.plot_save is not None:
+        saved_path = derive_plot_save_path(args.input, args.plot_save)
+        plt.savefig(saved_path, dpi=150)
+
+    if not args.no_show:
+        plt.show()
+
+    plt.close(fig)
+    return saved_path
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -333,12 +527,25 @@ def main(argv: list[str] | None = None) -> int:
             args.prominence,
             args.distance,
         )
-        rows = format_peaks(peaks, freqs, smoothed)
+        rows = format_peaks(peaks, freqs, smoothed, args.peak_count)
 
-        if args.format == "csv":
-            write_csv(rows, args.output)
-        else:
-            write_table(rows, args.output)
+        visualization_requested = args.visualize or args.spectrogram or args.plot_save is not None
+        if visualization_requested:
+            plot_analysis(
+                data=decay_signal,
+                sr=sr,
+                peaks=peaks,
+                spectrum=smoothed,
+                freqs=freqs,
+                rows=rows,
+                args=args,
+            )
+
+        if not args.quiet:
+            if args.format == "csv":
+                write_csv(rows, args.output)
+            else:
+                write_table(rows, args.output)
 
         return 0
     except RuntimeError as exc:

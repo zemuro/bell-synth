@@ -189,5 +189,131 @@ def test_missing_input_file_returns_error() -> None:
     assert "not found" in result.stderr.lower()
 
 
+def test_plot_save_creates_png() -> None:
+    png_path = PROJECT_ROOT / "samples" / "synthetic_bell_plot.png"
+    if png_path.exists():
+        png_path.unlink()
+
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--plot-save",
+        str(png_path),
+        "--no-show",
+        "--attack-skip-ms",
+        "60",
+        "--prominence",
+        "0.005",
+        "--distance",
+        "30",
+    ])
+    assert result.returncode == 0, result.stderr
+    assert png_path.exists()
+    assert png_path.stat().st_size > 0
+
+
+def test_visualize_no_show_plot_save() -> None:
+    png_path = PROJECT_ROOT / "samples" / "visualize_test.png"
+    if png_path.exists():
+        png_path.unlink()
+
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--visualize",
+        "--no-show",
+        "--plot-save",
+        str(png_path),
+        "--attack-skip-ms",
+        "60",
+    ])
+    assert result.returncode == 0, result.stderr
+    assert png_path.exists()
+    assert png_path.stat().st_size > 0
+
+
+def test_plot_save_default_filename() -> None:
+    default_path = PROJECT_ROOT / "synthetic_bell_bell_analysis.png"
+    if default_path.exists():
+        default_path.unlink()
+
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--plot-save",
+        "--no-show",
+        "--attack-skip-ms",
+        "60",
+    ])
+    assert result.returncode == 0, result.stderr
+    assert default_path.exists()
+    assert default_path.stat().st_size > 0
+
+
+def test_quiet_suppresses_text_output() -> None:
+    png_path = PROJECT_ROOT / "samples" / "quiet_test.png"
+    if png_path.exists():
+        png_path.unlink()
+
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--plot-save",
+        str(png_path),
+        "--no-show",
+        "--quiet",
+        "--attack-skip-ms",
+        "60",
+    ])
+    assert result.returncode == 0, result.stderr
+    assert png_path.exists()
+    assert "peak_number" not in result.stdout
+    assert "frequency_hz" not in result.stdout
+
+
+def test_peak_count_limits_output() -> None:
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--peak-count",
+        "2",
+        "--attack-skip-ms",
+        "60",
+        "--prominence",
+        "0.005",
+        "--distance",
+        "30",
+    ])
+    assert result.returncode == 0, result.stderr
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    # Header + 2 data rows
+    assert len(lines) == 3
+
+
+def test_spectrogram_alias_enables_plotting() -> None:
+    png_path = PROJECT_ROOT / "samples" / "alias_test.png"
+    if png_path.exists():
+        png_path.unlink()
+
+    result = run_command([
+        sys.executable,
+        str(ANALYZE_BELL),
+        str(SAMPLE_PATH),
+        "--spectrogram",
+        "--no-show",
+        "--plot-save",
+        str(png_path),
+        "--attack-skip-ms",
+        "60",
+    ])
+    assert result.returncode == 0, result.stderr
+    assert png_path.exists()
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

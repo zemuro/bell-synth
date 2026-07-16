@@ -6,16 +6,16 @@ A command-line tool that analyzes a single bell WAV sample and reports its spect
 
 ## Plan Status
 
-- **Current phase:** Phase 02 (planning)
+- **Current phase:** Phase 02 (implemented)
 - **Last updated:** 2026-07-16
-- **Overall status:** 0 phases ready, 1 implemented, 1 planning
+- **Overall status:** 2 phases implemented, 0 ready, 0 planning
 
 ## Phase Status Table
 
 | Phase | Title | Status | Locked |
 |-------|-------|--------|--------|
 | [01](phase-01.md) | Bell Sample Overtone Analyzer CLI | implemented | ✅ |
-| [02](phase-02.md) | Bell Partial Analyzer Visualization | planning | ⬜ |
+| [02](phase-02.md) | Bell Partial Analyzer Visualization | implemented | ✅ |
 
 ## Directory Layout
 
@@ -27,6 +27,7 @@ A command-line tool that analyzes a single bell WAV sample and reports its spect
 ## Completed
 
 - Phase 01 implementation report: `c:/Users/zemuro/Antigravity/bell synth/plan/reports/phase-01-implementation.md`
+- Phase 02 implementation report: `c:/Users/zemuro/Antigravity/bell synth/plan/reports/phase-02-implementation.md`
 
 ## Notes
 
