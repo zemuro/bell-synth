@@ -40,7 +40,7 @@ peak_number,frequency_hz,amplitude_percent,note_name,deviation_cents
 
 ## Configuration
 
-Copy `analyze_bell.ini.example` to `analyze_bell.ini` and edit the values. CLI flags always override config values, and config values override hardcoded defaults.
+Edit `analyze_bell.ini` to change defaults. CLI flags always override config values, and config values override hardcoded defaults. You can also use `--save-config` to dump the effective configuration for editing.
 
 ```bash
 # Save the current effective configuration for editing

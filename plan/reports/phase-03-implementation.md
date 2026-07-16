@@ -10,15 +10,14 @@ completion_date: 2026-07-16
 
 ## Executive Summary
 
-Phase 03 adds an INI-based configuration system, new CLI flags, improved overtone label layout, and bilingual (English/Russian) documentation to the bell analyzer. The implementation preserves all existing Phase 01/02 behavior while letting users override defaults via `config/default.ini`, a user-provided INI file, or command-line arguments. Docstrings were added across the main module, and the project now ships with a Russian translation of the README and user docs.
+Phase 03 adds an INI-based configuration system, new CLI flags, improved overtone label layout, and bilingual (English/Russian) documentation to the bell analyzer. The implementation preserves all existing Phase 01/02 behavior while letting users override defaults via `analyze_bell.ini`, a user-provided INI file, or command-line arguments. Docstrings were added across the main module, and the project now ships with a Russian translation of the README and user docs.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
 | `c:/Users/zemuro/Antigravity/bell synth/analyze_bell.py` | Modified — added INI loading, CLI flags (`--config`, `--save-config`, `--n-labels`), staggered label offsets, and module docstrings |
-| `c:/Users/zemuro/Antigravity/bell synth/analyze_bell.ini.example` | New — example user configuration file |
-| `c:/Users/zemuro/Antigravity/bell synth/config/default.ini` | New — built-in default settings |
+| `c:/Users/zemuro/Antigravity/bell synth/analyze_bell.ini` | New — default configuration file |
 | `c:/Users/zemuro/Antigravity/bell synth/README.md` | Modified — updated to reference config and bilingual docs |
 | `c:/Users/zemuro/Antigravity/bell synth/README.ru.md` | New — Russian README |
 | `c:/Users/zemuro/Antigravity/bell synth/docs/usage.md` | New — English usage guide |
@@ -53,9 +52,18 @@ Phase 03 adds an INI-based configuration system, new CLI flags, improved overton
 
 ## Known Limitations & Follow-up
 
-- CLI action flags (`--save-config`, `--plot`, etc.) are not configurable via INI — this is intentional to keep the config file focused on analysis parameters.
+- CLI action flags (`--visualize`, `--quiet`, `--no-show`, etc.) are not configurable via INI — this is intentional to keep the config file focused on analysis parameters.
 - Russian translations are hand-maintained; they should be reviewed whenever the English docs change significantly.
 - No automatic sync tooling between `README.md`/`README.ru.md` is in place yet.
+
+## Post-implementation Changes
+
+After the initial Phase 03 commit, the repository layout was simplified and the Russian docs were polished:
+
+- Removed `config/default.ini`.
+- Renamed `analyze_bell.ini.example` to `analyze_bell.ini`; it now serves as the bundled default config.
+- Updated `load_config` to fall back to `analyze_bell.ini` next to the script when no local config exists.
+- Rewrote `README.ru.md`, `docs/usage.ru.md`, `docs/config.ru.md`, and `docs/development.ru.md` for more natural and readable Russian.
 
 ## Conclusion
 

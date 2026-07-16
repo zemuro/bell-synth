@@ -7,8 +7,7 @@ This guide explains how the analyzer works and how to contribute.
 ```text
 c:/Users/zemuro/Antigravity/bell synth/
 ├── analyze_bell.py              # Main CLI and analysis pipeline
-├── analyze_bell.ini.example     # Documented example configuration
-├── config/default.ini           # Repository-wide default config
+├── analyze_bell.ini             # Default configuration file
 ├── requirements.txt             # Python dependencies
 ├── README.md / README.ru.md     # Project overviews
 ├── docs/                        # Bilingual documentation

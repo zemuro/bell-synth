@@ -8,7 +8,7 @@ The tool searches for configuration in this order:
 
 1. File passed with `--config /path/to/file.ini`
 2. `analyze_bell.ini` in the current working directory
-3. `config/default.ini` next to the script
+3. `analyze_bell.ini` next to the script (the bundled defaults)
 4. Hardcoded defaults
 
 If no config file is found, the analyzer uses hardcoded defaults and runs normally.

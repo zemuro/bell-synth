@@ -109,7 +109,7 @@ def load_config(path: Path | None) -> dict[str, object]:
     If ``path`` is provided and exists, it is parsed directly. If ``path`` is
     provided and missing, a RuntimeError is raised. If ``path`` is ``None``,
     the function searches for ``analyze_bell.ini`` in the current working
-    directory and then ``config/default.ini`` next to the script.
+    directory and then falls back to ``analyze_bell.ini`` next to the script.
 
     Args:
         path: Explicit path to a config file, or ``None`` to search defaults.
@@ -125,14 +125,14 @@ def load_config(path: Path | None) -> dict[str, object]:
             raise RuntimeError(f"Error: config file not found: {path}")
         files_to_read = [path]
     else:
-        cwd_ini = Path.cwd() / "analyze_bell.ini"
         script_dir = Path(__file__).resolve().parent
-        default_ini = script_dir / "config" / "default.ini"
+        cwd_ini = Path.cwd() / "analyze_bell.ini"
+        bundled_ini = script_dir / "analyze_bell.ini"
         files_to_read = []
         if cwd_ini.exists():
             files_to_read.append(cwd_ini)
-        elif default_ini.exists():
-            files_to_read.append(default_ini)
+        elif bundled_ini.exists():
+            files_to_read.append(bundled_ini)
 
     result: dict[str, object] = {}
     if not files_to_read:
