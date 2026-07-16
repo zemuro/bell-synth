@@ -86,8 +86,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--fft-size",
         type=int,
-        default=8192,
-        help="FFT size per frame (default: 8192).",
+        default=16384,
+        help="FFT size per frame (default: 16384).",
     )
     parser.add_argument(
         "--hop-size",
@@ -153,6 +153,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         default=4096,
         help="FFT length used by the STFT (default: 4096).",
+    )
+    parser.add_argument(
+        "--spectrum-floor",
+        type=float,
+        default=-50.0,
+        help="Minimum dB value shown on the averaged spectrum plot "
+             "(default: -50.0).",
     )
     return parser.parse_args(argv)
 
@@ -448,14 +455,16 @@ def plot_analysis(
     # --- Bottom subplot: averaged spectrum with peaks ---
     ax_mag = axes[1]
     spectrum_db = 20.0 * np.log10(np.maximum(spectrum, 0.0) + 1e-12)
-    ax_mag.plot(freqs, spectrum_db, color="steelblue", linewidth=0.8)
+    floor_db = float(args.spectrum_floor)
+    spectrum_db_plot = np.maximum(spectrum_db, floor_db)
+    ax_mag.plot(freqs, spectrum_db_plot, color="steelblue", linewidth=0.8)
 
     if len(peaks) > 0:
         peak_freqs = freqs[peaks]
-        peak_mags = spectrum_db[peaks]
+        peak_mags = np.maximum(spectrum_db[peaks], floor_db)
         ax_mag.vlines(
             peak_freqs,
-            ymin=np.min(spectrum_db) - 5,
+            ymin=floor_db,
             ymax=peak_mags,
             color="red",
             linewidth=1.5,
@@ -468,7 +477,7 @@ def plot_analysis(
             if row["amplitude_percent"] < 5.0:
                 continue
             x = row["frequency_hz"]
-            y = float(np.interp(x, freqs, spectrum_db))
+            y = max(float(np.interp(x, freqs, spectrum_db)), floor_db)
             label = (
                 f"{row['frequency_hz']:.1f} Hz\n"
                 f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
@@ -490,6 +499,7 @@ def plot_analysis(
             )
 
     ax_mag.set_xlim(args.min_freq, min(args.max_freq, sr / 2.0))
+    ax_mag.set_ylim(bottom=floor_db)
     ax_mag.set_xlabel("Frequency (Hz)")
     ax_mag.set_ylabel("Magnitude (dB)")
     ax_mag.set_title("Averaged Spectrum with Detected Partials")

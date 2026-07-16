@@ -25,7 +25,7 @@ venv\Scripts\pip install -r requirements.txt
 ### Basic analysis
 
 ```bash
-# Print CSV to stdout
+# Print CSV to stdout (default FFT size is 16384)
 python analyze_bell.py samples/bell.wav
 
 # Write CSV file, skip first 150 ms
@@ -33,6 +33,9 @@ python analyze_bell.py samples/bell.wav --output peaks.csv --attack-skip-ms 150
 
 # Formatted table with a narrower frequency range
 python analyze_bell.py samples/bell.wav --min-freq 200 --max-freq 4000 --prominence 0.02 --format table
+
+# Use a smaller FFT for faster analysis
+python analyze_bell.py samples/bell.wav --fft-size 8192 --hop-size 2048
 ```
 
 ### Visualization
@@ -52,6 +55,9 @@ python analyze_bell.py samples/bell.wav --plot-save --no-show --quiet
 
 # Limit the number of reported peaks
 python analyze_bell.py samples/bell.wav --peak-count 12 --max-freq 6000
+
+# Adjust the spectrum plot floor (default -50 dB)
+python analyze_bell.py samples/bell.wav --plot-save --no-show --spectrum-floor -60
 ```
 
 ## Tests
