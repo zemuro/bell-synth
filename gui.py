@@ -300,7 +300,7 @@ if selected_file:
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 15), (0, 45), (0, 75), (0, 105)]
+                    offsets = [(0, 105), (0, 75), (0, 45), (0, 15)]
                     ox, oy = offsets[idx % len(offsets)]
                     va = "bottom"
                     ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
@@ -323,6 +323,10 @@ if selected_file:
                 ax_spec.yaxis.set_major_formatter(ticker.ScalarFormatter())
                 ax_mag.set_xscale("symlog", linthresh=100)
                 ax_mag.xaxis.set_major_formatter(ticker.ScalarFormatter())
+                
+                tick_locs = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+                ax_spec.set_yticks(tick_locs)
+                ax_mag.set_xticks(tick_locs)
                 
             plt.tight_layout()
             
