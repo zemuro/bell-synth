@@ -300,7 +300,7 @@ if selected_file:
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 90), (0, 65), (0, 40), (0, 15)]
+                    offsets = [(0, 60), (0, 45), (0, 30), (0, 15)]
                     ox, oy = offsets[idx % len(offsets)]
                     va = "bottom"
                     ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
@@ -310,7 +310,7 @@ if selected_file:
                                     
             ax_mag.set_xlim(y_min, y_max)
             if len(peaks) > 0:
-                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 60)
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 40)
             else:
                 ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
