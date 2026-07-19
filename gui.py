@@ -59,14 +59,13 @@ if uploaded_file is not None:
     temp_path.write_bytes(uploaded_file.getvalue())
     selected_file = str(temp_path)
 
-if "start_offset_ms" not in st.session_state:
-    st.session_state.start_offset_ms = 0.0
 if "last_file" not in st.session_state:
     st.session_state.last_file = selected_file
 
 # Auto-reset start_offset if file changes
 if selected_file != st.session_state.last_file:
-    st.session_state.start_offset_ms = 0.0
+    if "start_offset_ms_input" in st.session_state:
+        del st.session_state.start_offset_ms_input
     st.session_state.last_file = selected_file
 
 with st.sidebar.expander("Analysis Parameters", expanded=False):
@@ -74,19 +73,18 @@ with st.sidebar.expander("Analysis Parameters", expanded=False):
     start_offset_ms = col1.number_input(
         "Start Offset (ms)", 
         min_value=0.0,
-        value=float(st.session_state.start_offset_ms), 
+        value=0.0, 
         step=5.0, 
         format="%.1f",
         key="start_offset_ms_input",
         help="The starting time of the analysis window. Used to trim silence before the bell strike."
     )
-    st.session_state.start_offset_ms = start_offset_ms
     
     if col2.button("Auto-Detect"):
         if selected_file:
             tmp_data, tmp_sr = load_audio(Path(selected_file))
             detected = find_transient_ms(tmp_data, tmp_sr)
-            st.session_state.start_offset_ms = detected
+            st.session_state.start_offset_ms_input = detected
             st.rerun()
 
     attack_skip_ms = st.number_input(
