@@ -300,7 +300,7 @@ if selected_file:
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 105), (0, 75), (0, 45), (0, 15)]
+                    offsets = [(0, 90), (0, 65), (0, 40), (0, 15)]
                     ox, oy = offsets[idx % len(offsets)]
                     va = "bottom"
                     ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
@@ -310,12 +310,12 @@ if selected_file:
                                     
             ax_mag.set_xlim(y_min, y_max)
             if len(peaks) > 0:
-                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 50)
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 70)
             else:
                 ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
             ax_mag.set_ylabel("Magnitude (dB)")
-            ax_mag.set_title("Averaged Spectrum with Detected Partials")
+            ax_mag.set_title("Averaged Spectrum with Detected Partials", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.9))
             
             if log_freq_scale:
                 import matplotlib.ticker as ticker
