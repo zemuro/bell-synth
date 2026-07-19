@@ -293,24 +293,26 @@ if selected_file:
                 ax_mag.vlines(peak_freqs, ymin=spectrum_floor, ymax=peak_mags, color="red", linewidth=1.5, alpha=0.7)
                 
                 labeled_rows = rows[:n_labels]
-                labeled_rows = sorted(labeled_rows, key=lambda r: r["frequency_hz"])
-                for idx, row in enumerate(labeled_rows):
+                texts = []
+                for row in labeled_rows:
                     x = row["frequency_hz"]
                     y = max(float(np.interp(x, freqs, spectrum_db)), spectrum_floor)
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 90), (0, 65), (0, 40), (0, 15)]
-                    ox, oy = offsets[idx % len(offsets)]
-                    va = "bottom"
-                    ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
-                                    fontsize=8, ha="center", va=va,
-                                    bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.8),
-                                    arrowprops=dict(arrowstyle="-", color="gray", lw=0.5))
+                    txt = ax_mag.text(x, y + 2, label, fontsize=8, ha="center", va="bottom",
+                                      bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.8))
+                    texts.append(txt)
+                    
+                try:
+                    from adjustText import adjust_text
+                    adjust_text(texts, ax=ax_mag, arrowprops=dict(arrowstyle="-", color="gray", lw=0.5))
+                except ImportError:
+                    pass
                                     
             ax_mag.set_xlim(y_min, y_max)
             if len(peaks) > 0:
-                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 70)
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 30)
             else:
                 ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
