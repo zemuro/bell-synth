@@ -79,13 +79,13 @@ with st.sidebar.expander("Analysis Parameters", expanded=False):
         key="start_offset_ms_input",
         help="The starting time of the analysis window. Used to trim silence before the bell strike."
     )
-    
-    if col2.button("Auto-Detect"):
+    def perform_auto_detect():
         if selected_file:
             tmp_data, tmp_sr = load_audio(Path(selected_file))
             detected = find_transient_ms(tmp_data, tmp_sr)
             st.session_state.start_offset_ms_input = detected
-            st.rerun()
+
+    col2.button("Auto-Detect", on_click=perform_auto_detect)
 
     attack_skip_ms = st.number_input(
         "Attack Skip (ms)", 
