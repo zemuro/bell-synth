@@ -294,23 +294,46 @@ if selected_file:
                 
                 labeled_rows = rows[:n_labels]
                 labeled_rows = sorted(labeled_rows, key=lambda r: r["frequency_hz"])
-                for idx, row in enumerate(labeled_rows):
+                levels = [15, 40, 65, 90]
+                last_x_at_level = [-float('inf')] * len(levels)
+                
+                if log_freq_scale:
+                    log_span = np.log10(y_max) - np.log10(max(y_min, 1))
+                    min_dist = log_span * 0.12
+                else:
+                    span = y_max - y_min
+                    min_dist = span * 0.12
+                    
+                for row in labeled_rows:
                     x = row["frequency_hz"]
                     y = max(float(np.interp(x, freqs, spectrum_db)), spectrum_floor)
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 60), (0, 45), (0, 30), (0, 15)]
-                    ox, oy = offsets[idx % len(offsets)]
-                    va = "bottom"
-                    ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
-                                    fontsize=8, ha="center", va=va,
+                    
+                    chosen_level = len(levels) - 1
+                    for i in range(len(levels)):
+                        last_x = last_x_at_level[i]
+                        if log_freq_scale:
+                            dist = np.log10(x) - np.log10(max(last_x, 1e-6))
+                        else:
+                            dist = x - last_x
+                            
+                        if dist > min_dist:
+                            chosen_level = i
+                            break
+                            
+                    last_x_at_level[chosen_level] = x
+                    oy = levels[chosen_level]
+                    
+                    ax_mag.annotate(label, xy=(x, y), xytext=(0, oy), textcoords="offset points",
+                                    fontsize=8, ha="center", va="bottom",
                                     bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.8),
                                     arrowprops=dict(arrowstyle="-", color="gray", lw=0.5))
                                     
             ax_mag.set_xlim(y_min, y_max)
             if len(peaks) > 0:
-                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 40)
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 50)
             else:
                 ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
