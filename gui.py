@@ -69,13 +69,6 @@ if selected_file != st.session_state.last_file:
     st.session_state.start_offset_ms = 0.0
     st.session_state.last_file = selected_file
 
-st.sidebar.markdown("---")
-if st.sidebar.button("Reset All Settings"):
-    for k in list(st.session_state.keys()):
-        if k != "last_file":
-            del st.session_state[k]
-    st.rerun()
-
 with st.sidebar.expander("Analysis Parameters", expanded=False):
     col1, col2 = st.columns([2, 1])
     start_offset_ms = col1.number_input(
@@ -192,6 +185,13 @@ with st.sidebar.expander("Advanced FFT Parameters", expanded=False):
 with st.sidebar.expander("Export Options", expanded=False):
     midi_top_n = st.number_input("Max MIDI Overtones", min_value=1, max_value=128, value=16, step=1, key="midi_top_n", help="Only export the N loudest overtones to the MIDI file to prevent cluttering the synthesizer.")
     pdf_dpi = st.number_input("PDF Image DPI", min_value=50, max_value=600, value=150, step=10, key="pdf_dpi", help="Resolution of the spectrogram image embedded in the PDF. Lower this if the exported PDF file size is too large.")
+
+st.sidebar.markdown("---")
+if st.sidebar.button("Reset All Settings"):
+    for k in list(st.session_state.keys()):
+        if k != "last_file":
+            del st.session_state[k]
+    st.rerun()
 
 if selected_file:
     try:
