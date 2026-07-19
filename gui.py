@@ -135,8 +135,24 @@ with st.sidebar.expander("Analysis Parameters", expanded=False):
 
     min_freq = st.number_input("Min Freq (Hz)", min_value=10.0, max_value=20000.0, value=float(defaults["min_freq"]), step=10.0, key="min_freq", help="Lower bound of frequencies to search for overtones.")
     max_freq = st.number_input("Max Freq (Hz)", min_value=100.0, max_value=24000.0, value=float(defaults["max_freq"]), step=100.0, key="max_freq", help="Upper bound of frequencies to search for overtones.")
-    prominence = st.number_input("Prominence", min_value=0.0001, max_value=1.0, value=float(defaults["prominence"]), format="%.4f", step=0.001, key="prominence", help="How much a spectral peak must stand out above the surrounding noise to be considered an overtone. Lower this if it misses quiet notes.")
-    distance = st.number_input("Min Bin Dist.", min_value=1, max_value=2000, value=int(defaults["distance"]), step=5, key="distance", help="Minimum number of FFT bins between two peaks. Increase this if a single note is incorrectly detected as multiple tiny peaks.")
+    
+    st.markdown("##### Peak Detection Mode")
+    peak_mode = st.selectbox(
+        "Mode", 
+        ["Logarithmic (Musical)", "Linear (Mathematical)"], 
+        index=0 if defaults.get("peak_mode", "Logarithmic (Musical)") == "Logarithmic (Musical)" else 1,
+        key="peak_mode",
+        help="Logarithmic mode is much better for musical tuning and hearing. Linear is for strict mathematical signal processing."
+    )
+    
+    if peak_mode == "Logarithmic (Musical)":
+        prominence = st.number_input("Prominence (dB)", min_value=0.1, max_value=100.0, value=float(defaults.get("prominence_log", 5.0)), step=1.0, key="prominence_log", help="How many dB a peak must stand out above the surrounding noise floor.")
+        distance = st.number_input("Min Dist (Semitones)", min_value=0.01, max_value=12.0, value=float(defaults.get("distance_log", 0.5)), step=0.1, key="distance_log", help="Minimum musical distance between peaks. E.g. 1.0 = one semitone apart.")
+        mode_str = "logarithmic"
+    else:
+        prominence = st.number_input("Prominence (Linear)", min_value=0.0001, max_value=1.0, value=float(defaults.get("prominence_lin", defaults.get("prominence", 0.005))), format="%.4f", step=0.001, key="prominence_lin", help="Linear amplitude threshold. How much a peak stands out mathematically.")
+        distance = float(st.number_input("Min Dist (FFT Bins)", min_value=1, max_value=2000, value=int(defaults.get("distance_lin", defaults.get("distance", 10))), step=5, key="distance_lin", help="Minimum number of FFT bins between peaks."))
+        mode_str = "linear"
     
     # Force odd smoothing window
     smooth_default = int(defaults["smoothing_window"])
@@ -230,7 +246,7 @@ if selected_file:
         decay_signal = skip_attack(data, sr, attack_skip_ms, start_offset_ms=start_offset_ms)
         spectrum, freqs = compute_mean_spectrum(decay_signal, sr, fft_size, hop_size)
         smoothed = smooth_spectrum(spectrum, smoothing_window)
-        peaks, _ = detect_peaks(smoothed, freqs, min_freq, max_freq, prominence, distance)
+        peaks, _ = detect_peaks(smoothed, freqs, min_freq, max_freq, prominence, distance, mode=mode_str)
         
         # STFT for spectrogram and durations
         spec_db, spec_times, spec_freqs = compute_stft(
