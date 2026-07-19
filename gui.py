@@ -161,6 +161,7 @@ with st.sidebar.expander("Analysis Parameters", expanded=False):
     smoothing_window = st.number_input("Smooth Win.", min_value=3, max_value=999, value=smooth_default, step=2, key="smoothing_window", help="Smooths the jagged spectrum before peak detection to avoid finding false peaks in noise. Must be an odd number.")
 
 with st.sidebar.expander("Display Options", expanded=False):
+    log_freq_scale = st.checkbox("Logarithmic Frequency Axis", value=bool(defaults.get("log_freq_scale", False)), key="log_freq_scale", help="Renders the X-axis of the spectrum and Y-axis of the spectrogram on a logarithmic scale, matching human hearing.")
     spectrum_floor = st.number_input("Spec. Floor (dB)", max_value=0.0, value=float(defaults["spectrum_floor"]), step=5.0, key="spectrum_floor", help="Sets the lowest visible dB level on the 1D spectrum plot. Lower this if peaks are cut off at the bottom.")
     spec_floor = st.number_input("STFT Floor (dB)", max_value=0.0, value=float(defaults["spec_floor"]), step=5.0, key="spec_floor", help="Sets the lowest visible dB level on the 2D spectrogram. Raise this to filter out background noise in the visual.")
     n_labels = st.number_input("Number of Labels", min_value=0, max_value=100, value=int(defaults["n_labels"]), step=1, key="n_labels", help="Limit the number of text labels on the spectrum plot to avoid crowding.")
@@ -311,6 +312,14 @@ if selected_file:
             ax_mag.set_xlabel("Frequency (Hz)")
             ax_mag.set_ylabel("Magnitude (dB)")
             ax_mag.set_title("Averaged Spectrum with Detected Partials")
+            
+            if log_freq_scale:
+                import matplotlib.ticker as ticker
+                ax_spec.set_yscale("symlog", linthresh=100)
+                ax_spec.yaxis.set_major_formatter(ticker.ScalarFormatter())
+                ax_mag.set_xscale("symlog", linthresh=100)
+                ax_mag.xaxis.set_major_formatter(ticker.ScalarFormatter())
+                
             plt.tight_layout()
             
             st.pyplot(fig)
