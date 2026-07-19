@@ -427,12 +427,18 @@ def find_transient_ms(data: np.ndarray, sr: int, window_ms: float = 5.0, thresho
     mean_squared = np.convolve(squared, window, mode='valid')
     rms = np.sqrt(mean_squared)
 
-    max_rms = np.max(rms)
-    if max_rms == 0:
+    # Use the derivative of the RMS to find the sharpest volume increase
+    rms_diff = np.diff(rms)
+    if len(rms_diff) == 0:
+        return 0.0
+        
+    max_diff = np.max(rms_diff)
+    if max_diff <= 0:
         return 0.0
     
-    threshold = max_rms * threshold_ratio
-    above_threshold = np.where(rms > threshold)[0]
+    # Find where the slope first exceeds 20% of the maximum attack slope
+    threshold = max_diff * 0.2
+    above_threshold = np.where(rms_diff > threshold)[0]
     
     if len(above_threshold) > 0:
         return float((above_threshold[0] / sr) * 1000.0)
