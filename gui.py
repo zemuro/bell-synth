@@ -294,15 +294,15 @@ if selected_file:
                 
                 labeled_rows = rows[:n_labels]
                 labeled_rows = sorted(labeled_rows, key=lambda r: r["frequency_hz"])
-                levels = [15, 40, 65, 90]
+                levels = [15, 50, 85, 120]  # 35 points vertical clearance
                 last_x_at_level = [-float('inf')] * len(levels)
                 
                 if log_freq_scale:
                     log_span = np.log10(y_max) - np.log10(max(y_min, 1))
-                    min_dist = log_span * 0.065
+                    min_dist = log_span * 0.09  # 9% of plot width horizontal clearance
                 else:
                     span = y_max - y_min
-                    min_dist = span * 0.065
+                    min_dist = span * 0.09
                     
                 for row in labeled_rows:
                     x = row["frequency_hz"]
@@ -333,7 +333,7 @@ if selected_file:
                                     
             ax_mag.set_xlim(y_min, y_max)
             if len(peaks) > 0:
-                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 50)
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 70)
             else:
                 ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
