@@ -306,7 +306,7 @@ if selected_file:
                     
                 try:
                     from adjustText import adjust_text
-                    adjust_text(texts, ax=ax_mag, arrowprops=dict(arrowstyle="-", color="gray", lw=0.5))
+                    adjust_text(texts, ax=ax_mag, arrowprops=dict(arrowstyle="-", color="gray", lw=0.5), only_move={'text': 'y'})
                 except ImportError:
                     pass
                                     
