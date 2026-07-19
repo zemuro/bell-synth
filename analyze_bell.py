@@ -596,7 +596,9 @@ def detect_peaks(
 
     if mode == "logarithmic":
         # Logarithmic (Musical) Peak Detection
-        db_spectrum = 20.0 * np.log10(spectrum + 1e-12)
+        # Clamp to 1e-12 to prevent NaNs from Savitzky-Golay filter overshoots
+        safe_spectrum = np.maximum(spectrum, 1e-12)
+        db_spectrum = 20.0 * np.log10(safe_spectrum)
         peaks, _ = find_peaks(db_spectrum, prominence=prominence)
         
         # Filter by frequency range
