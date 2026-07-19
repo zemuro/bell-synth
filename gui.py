@@ -299,16 +299,19 @@ if selected_file:
                     label = (f"{row['frequency_hz']:.1f} Hz\n"
                              f"{row['note_name']} {row['deviation_cents']:+.1f} c\n"
                              f"{row['amplitude_db']:.1f} dB")
-                    offsets = [(0, 14), (0, 24), (0, -14), (0, -24)]
+                    offsets = [(0, 15), (0, 45), (0, 75), (0, 105)]
                     ox, oy = offsets[idx % len(offsets)]
-                    va = "bottom" if oy > 0 else "top"
+                    va = "bottom"
                     ax_mag.annotate(label, xy=(x, y), xytext=(ox, oy), textcoords="offset points",
                                     fontsize=8, ha="center", va=va,
                                     bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="gray", alpha=0.8),
                                     arrowprops=dict(arrowstyle="-", color="gray", lw=0.5))
                                     
             ax_mag.set_xlim(min_freq, min(max_freq, sr / 2.0))
-            ax_mag.set_ylim(bottom=spectrum_floor)
+            if len(peaks) > 0:
+                ax_mag.set_ylim(bottom=spectrum_floor, top=max(peak_mags) + 50)
+            else:
+                ax_mag.set_ylim(bottom=spectrum_floor, top=20.0)
             ax_mag.set_xlabel("Frequency (Hz)")
             ax_mag.set_ylabel("Magnitude (dB)")
             ax_mag.set_title("Averaged Spectrum with Detected Partials")
